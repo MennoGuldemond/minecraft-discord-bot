@@ -1,49 +1,36 @@
-const dotenv = require('dotenv');
-// const { Client } = require('discord.js');
-const packageJson = require('./package.json');
+const { Client, Intents } = require('discord.js');
 const serverUtil = require('minecraft-server-util');
+const dotenv = require('dotenv');
+const packageJson = require('./package.json');
+const MessageBuilder = require('./message-builder');
 
 const options = {
-  enableSRV: true, // SRV record lookup
+  enableSRV: true,
 };
 
 dotenv.config();
-// const client = new Client();
-// const prefix = '!';
+const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 
-// client.on('ready', () => {
-//   console.log(`Logged in as ${client.user.tag}!`);
-// });
+client.once('ready', () => {
+  console.log(`Logged in as ${client.user.tag}!`);
+});
 
-// client.on('message', (message) => {
-//   if (!message.content.startsWith(prefix) || message.author.bot) {
-//     return;
-//   }
-//   const arguments = message.content.slice(prefix.length).trim().split(' ');
-//   const command = arguments.shift().toLowerCase();
+client.on('interactionCreate', async (interaction) => {
+  if (!interaction.isCommand()) return;
 
-//   if (command === 'status') {
-//     return handleStatus(message);
-//   } else if (command === 'version') {
-//     return handleVersion(message, arguments);
-//   }
-// });
+  const { commandName } = interaction;
 
-// client.login(process.env.BOT_TOKEN);
-
-function handleStatus(message) {
-  serverUtil
-    .status('rwc.beastmc.com', 25596)
-    .then((result) => console.log(result))
-    .catch((error) => console.error(error));
-}
-
-function handleVersion(message) {
-  if (!isTestMode && message.channel.id) {
-    return;
+  if (commandName === 'status') {
+    serverUtil
+      .queryFull(process.env.HOST, +process.env.PORT, options)
+      .then((serverData) => {
+        const statusEmbed = MessageBuilder.createEmbed(serverData);
+        interaction.reply({ embeds: [statusEmbed] });
+      })
+      .catch((error) => console.error(error));
+  } else if (commandName === 'version') {
+    await interaction.reply(`My current version is ${packageJson.version}`);
   }
-  const versionString = `My current version is ${packageJson.version}`;
-  message.channel.send(versionString);
-}
+});
 
-handleStatus();
+client.login(process.env.BOT_TOKEN);
