@@ -1,28 +1,29 @@
 const { MessageEmbed } = require('discord.js');
 
 module.exports = {
-  createEmbed: function (data) {
-    const players = data.players.list.length
-      ? data.players.list.map((p) => `${p} \n`)
+  createEmbed: function (statusData, queryData) {
+    const players = queryData.players.list.length
+      ? queryData.players.list.join('\n')
       : '-';
 
     return new MessageEmbed()
       .setColor('#4a6f28')
-      .setTitle('Minecraft server status')
-      .setDescription(`${process.env.HOST}`)
+      .setTitle(`${statusData.srvRecord.host}`)
+      .setDescription(`${statusData.motd.clean}`)
       .addFields({
         name: 'Online',
-        value: `${data.players.online}/${data.players.max}`,
+        value: `${queryData.players.online}/${queryData.players.max}`,
+        inline: true,
       })
       .addFields({
         name: 'Players',
         value: `${players}`,
+        inline: true,
       })
       .addFields({
         name: 'Mincraft version',
-        value: `${data.version.name}`,
+        value: `${statusData.version.name}`,
       })
-      .setTimestamp()
-      .setFooter({ text: 'Royale With Cheese' });
+      .setTimestamp();
   },
 };

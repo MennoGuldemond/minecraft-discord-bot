@@ -1,4 +1,5 @@
 const { Client, Intents } = require('discord.js');
+const rxjs = require('rxjs');
 const serverUtil = require('minecraft-server-util');
 const dotenv = require('dotenv');
 const packageJson = require('./package.json');
@@ -21,13 +22,15 @@ client.on('interactionCreate', async (interaction) => {
   const { commandName } = interaction;
 
   if (commandName === 'status') {
-    serverUtil
-      .queryFull(process.env.HOST, +process.env.PORT, options)
-      .then((serverData) => {
-        const statusEmbed = MessageBuilder.createEmbed(serverData);
+    rxjs
+      .combineLatest([
+        serverUtil.status(process.env.HOST, +process.env.PORT, options),
+        serverUtil.queryFull(process.env.HOST, +process.env.PORT, options),
+      ])
+      .subscribe(([statusData, queryData]) => {
+        const statusEmbed = MessageBuilder.createEmbed(statusData, queryData);
         interaction.reply({ embeds: [statusEmbed] });
-      })
-      .catch((error) => console.error(error));
+      });
   } else if (commandName === 'version') {
     await interaction.reply(`My current version is ${packageJson.version}`);
   }
