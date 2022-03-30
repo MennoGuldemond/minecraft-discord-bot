@@ -1,19 +1,19 @@
+const fs = require('node:fs');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const dotenv = require('dotenv');
 
 dotenv.config();
 
-const commands = [
-  {
-    name: 'status',
-    description: 'Replies with minecraft server info',
-  },
-  {
-    name: 'version',
-    description: 'Returns the current version of the bot',
-  },
-];
+const commands = [];
+const commandFiles = fs
+  .readdirSync('./commands')
+  .filter((file) => file.endsWith('.js'));
+
+for (const file of commandFiles) {
+  const command = require(`./commands/${file}`);
+  commands.push(command.data.toJSON());
+}
 
 const rest = new REST({ version: '9' }).setToken(process.env.BOT_TOKEN);
 
